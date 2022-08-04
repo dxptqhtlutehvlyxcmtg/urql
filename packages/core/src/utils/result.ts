@@ -8,16 +8,19 @@ export const makeResult = (
 ): OperationResult => {
   if ((!('data' in result) && !('errors' in result)) || 'path' in result) {
     throw new Error('No Content');
+
+  let graphQLErrors;
+  if (Array.isArray(result.errors)) {
+    graphQLErrors = result.errors;
+  } else if (typeof result.errors === 'string') {
+    graphQLErrors = [result.errors];
   }
 
   return {
     operation,
     data: result.data,
-    error: Array.isArray(result.errors)
-      ? new CombinedError({
-          graphQLErrors: result.errors,
-          response,
-        })
+    error: graphQLErrors
+      ? new CombinedError({ response, graphQLErrors })
       : undefined,
     extensions:
       (typeof result.extensions === 'object' && result.extensions) || undefined,
